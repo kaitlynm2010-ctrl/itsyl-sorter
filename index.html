@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ITYSL Skit Sorter — HOOHHHH Productions</title>
+  <meta name="description" content="Rank every I Think You Should Leave skit head-to-head to find your personal all-time list. All 85 skits across seasons 1, 2, and 3." />
+  <meta property="og:title" content="ITYSL Skit Sorter" />
+  <meta property="og:description" content="Battle every I Think You Should Leave skit head-to-head to build your personal ranking. Created by HOOHHHH Productions." />
+  <meta property="og:type" content="website" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #7F77DD;
+      --purple-dark: #6860c4;
+      --bg: #ffffff;
+      --bg-secondary: #f5f5f5;
+      --text-primary: #111111;
+      --text-secondary: #555555;
+      --text-tertiary: #999999;
+      --border: rgba(0,0,0,0.12);
+      --border-light: rgba(0,0,0,0.07);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a1a;
+        --bg-secondary: #242424;
+        --text-primary: #f0f0f0;
+        --text-secondary: #aaaaaa;
+        --text-tertiary: #666666;
+        --border: rgba(255,255,255,0.12);
+        --border-light: rgba(255,255,255,0.07);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #app {
+      max-width: 680px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1rem 1rem;
+      flex: 1;
+    }
+
+    /* HEADER */
+    .header { text-align: center; margin-bottom: 2rem; }
+    .header h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.3px; }
+    .header p { font-size: 15px; color: var(--text-secondary); margin-top: 6px; }
+
+    /* SEASON FILTER */
+    .season-filter { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .filter-btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: 99px;
+      padding: 5px 16px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .filter-btn.active { background: var(--purple); color: #fff; border-color: var(--purple); }
+    .filter-btn:hover:not(.active) { border-color: var(--purple); color: var(--purple); }
+
+    /* START SCREEN */
+    .start-screen { text-align: center; padding: 1rem 0; }
+    .start-screen .intro { font-size: 15px; color: var(--text-secondary); margin: 8px 0 24px; line-height: 1.6; }
+    .start-btn {
+      background: var(--purple); color: #fff; border: none;
+      border-radius: var(--radius-sm); padding: 12px 32px;
+      font-size: 16px; cursor: pointer; font-family: inherit; font-weight: 600;
+      transition: background 0.15s;
+    }
+    .start-btn:hover { background: var(--purple-dark); }
+    .skit-count { font-size: 13px; color: var(--text-tertiary); margin-top: 8px; }
+
+    /* PROGRESS */
+    .progress-wrap { margin-bottom: 1rem; }
+    .progress-bar-track { background: var(--bg-secondary); border-radius: 99px; height: 6px; overflow: hidden; margin-bottom: 6px; }
+    .progress-bar-fill { height: 100%; background: var(--purple); border-radius: 99px; transition: width 0.3s ease; }
+    .progress-label { font-size: 12px; color: var(--text-tertiary); text-align: center; }
+
+    /* BATTLE */
+    .battle-question { text-align: center; font-size: 15px; color: var(--text-secondary); margin: 12px 0 8px; }
+    .battle-area { display: flex; gap: 12px; align-items: stretch; justify-content: center; margin-bottom: 12px; }
+    .skit-card {
+      flex: 1; max-width: 290px; min-width: 160px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden; cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+      display: flex; flex-direction: column;
+    }
+    .skit-card:hover { border-color: var(--purple); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(127,119,221,0.2); }
+    .skit-card:active { transform: scale(0.98); }
+    .skit-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; background: var(--bg-secondary); display: block; }
+    .skit-img-placeholder { width: 100%; aspect-ratio: 16/9; background: var(--bg-secondary); display: flex; align-items: center; justify-content: center; font-size: 32px; }
+    .skit-info { padding: 10px 12px 14px; flex: 1; }
+    .skit-name { font-size: 14px; font-weight: 600; line-height: 1.35; }
+    .skit-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
+    .vs-badge {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: var(--text-tertiary);
+      padding: 0 4px; align-self: center; flex-shrink: 0;
+    }
+
+    /* BATTLE BUTTONS */
+    .btn-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-secondary);
+      border-radius: var(--radius-sm);
+      padding: 7px 16px; font-size: 13px;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.1s, border-color 0.1s;
+    }
+    .btn:hover { background: var(--bg-secondary); border-color: var(--border); }
+
+    /* RESULTS */
+    .results-header { text-align: center; margin-bottom: 1.25rem; }
+    .results-header h2 { font-size: 20px; font-weight: 600; }
+    .results-header p { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+    .rank-list { list-style: none; border: 1px solid var(--border-light); border-radius: var(--radius); overflow: hidden; }
+    .rank-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .rank-item:last-child { border-bottom: none; }
+    .rank-item:nth-child(odd) { background: var(--bg-secondary); }
+    .rank-num { font-size: 13px; font-weight: 500; color: var(--text-tertiary); min-width: 28px; text-align: right; flex-shrink: 0; }
+    .rank-medal { font-size: 18px; min-width: 28px; text-align: right; flex-shrink: 0; }
+    .rank-name { font-size: 14px; font-weight: 500; flex: 1; }
+    .rank-meta { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
+    .rank-score { font-size: 12px; color: var(--purple); font-weight: 500; min-width: 46px; text-align: right; flex-shrink: 0; }
+
+    /* SHARE */
+    .share-row { text-align: center; margin-top: 1.5rem; }
+    .share-btn {
+      background: var(--purple); color: #fff; border: none;
+      border-radius: var(--radius-sm); padding: 10px 22px;
+      font-size: 14px; cursor: pointer; font-family: inherit; font-weight: 600;
+      transition: background 0.15s;
+    }
+    .share-btn:hover { background: var(--purple-dark); }
+    .copied-msg { font-size: 12px; color: var(--purple); margin-top: 8px; min-height: 18px; }
+
+    .restart-btn {
+      display: block; margin: 1.25rem auto 0;
+      padding: 8px 24px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text-primary); border-radius: var(--radius-sm);
+      font-size: 14px; cursor: pointer; font-family: inherit;
+      transition: background 0.1s;
+    }
+    .restart-btn:hover { background: var(--bg-secondary); }
+
+    /* FOOTER */
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-top: 1px solid var(--border-light);
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 480px) {
+      .header h1 { font-size: 20px; }
+      .skit-card { min-width: 130px; }
+      .skit-name { font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <div class="header">
+    <h1>I Think You Should Leave — Skit Sorter</h1>
+    <p>Battle every skit head-to-head to find your personal all-time ranking</p>
+  </div>
+  <div id="main"></div>
+</div>
+
+<footer>created by HOOHHHH productions</footer>
+
+<script>
+const BASE = "https://cdn.sanity.io/images/7lpknm4h/production/";
+const IMG = {
+  "pulling-the-door-open":"64eefff10b29a3b405423e5e16ad6087ac81bd12",
+  "has-this-ever-happened-to-you":"5f4ce8fbbfd6e17eaab64592de2fbfd47556f03b",
+  "baby-of-the-year":"2ec8eac36074a97e341cfead7a35fd6d9e4b4293",
+  "instagram":"9473fafb9bb86cfbd5b814833bfb726865be73b1",
+  "gift-receipt":"d0d8f067b7e46798f1113e866401837ab913e95e",
+  "motorcycles":"56134780-6a1e-4ab6-be84-150209ec70b1",
+  "river-mountain-high-part-1":"05b8f9d0d8e4ae8ccccdd915cd1b8b65dac51b2c",
+  "wilsons-toupees":"11b44af3b260da14364f2ae623a08fc88d580bc6",
+  "whoopee-cushion":"893b48fb7607606ae4289fdf2163e44c536435f4",
+  "river-mountain-high-part-2":"c70b54fec7e173742f4112474a21d2210a941a3f",
+  "the-man":"a35b9d47f4f65f9bb6a46507c804789df17275ed",
+  "magicians-suck":"c3efa606-deb7-4f50-be49-05fc0d58c1fb",
+  "focus-group":"b778b6eaf42458a5f06aecad8070b05c10b338ea",
+  "laser-spine-specialists":"1e6514fad0e2e78ed53c391354995dee611b3fa5",
+  "funeral-organ":"1b1dccfaf2c2e6dc46d9e3c66ce9e32c40d3482f",
+  "game-night":"c77d9b356b2eea27f48c1d5bd52163bcd0802ab9",
+  "herbie-hancock":"208bf3de47e5dbfad8444f84499bdbc49cc81646",
+  "ghosts-of-christmas-way-future":"e8112ebcc523b3ca9dd1b87cd0fe232f951ca2b0",
+  "fully-loaded-nachos":"1e1d3da1cb66b017d359159bdf5a0505ca26def8",
+  "honk-if-youre-horny":"b9f51ecc3657e2ce560b8a7398c3741d15eea27d",
+  "wienermobile":"bc2a60cc43096fe96b08af10611a66226a11d884",
+  "choking":"7b5da59fd0c10d4554d3f09493465443b6932dc9",
+  "new-office-printer":"7d7902a2b09a1f5001596a99e48b06db72e1e200",
+  "the-bones-are-their-money":"3d81f0bb4323537421d912308b31805e270a4347",
+  "babysitter-hit-and-run":"e51ad315b564fb54d8e95b17197f3206b0ab8cec",
+  "fentons-horse-ranch":"23a7652f-df3e-4287-9ede-21c4af115d19",
+  "dan-vegas-mega-money-quiz":"93c0c9b931629c254396d1390f1e595738f04094",
+  "bozo-dubbed-part-1":"9e7a235e21083ca0b211d5a6505f27dfc4f80651",
+  "baby-shower":"d896e33a8d1cf801317dad78cd8fc8ad6eb43592",
+  "bozo-dubbed-part-2":"671c0d91e2ec38d0957937a77105d1fe0d32cd1a",
+  "garfield-house":"44ea5054e7c14ab09b0f2eb8590b0d83ea82f56d",
+  "you-cant-skip-lunch":"674dab385fc6df1a5b740d43f2f1b0721d3d3721",
+  "coffin-flop":"8ed35d21e3ae082d6ab88597413f731e04f67f46",
+  "prank-show":"410f584715b78d662240b3175018c62c783110b1",
+  "little-buff-boys-competition":"0df6e16afe4fd67152f75c65eb2a745a81d23b96",
+  "ghost-tour":"c9a2e0ba13a839d32b1ae6c1b6c24bdb96cf87a9",
+  "the-capital-room":"d314896038fe35cd0b4983cc82aafe7bf4d10a70",
+  "dan-flashes":"7dfef971-b987-45f3-956f-b76ec17531c3",
+  "diner-wink":"f2f7d9cc82f44886584ec018f519143602f5470b",
+  "shops-at-the-creek":"cde40d4703cabdd9a73544c47bfd02755d78d2ef",
+  "baby-cries":"fc9282c3290333251f365706e9f45813943a1340",
+  "professor-dinner":"b42a7ecd4f14ff62bc97f86a2ecd55439f6650f5",
+  "detective-crashmore-trailer":"df9939ce93c539e58c7057639cd9c3798ce17608",
+  "carber-hot-dog-vac":"d7e8c106d9bb01bb7bace012e69fcf7037f1ec26",
+  "detective-crashmore-press-junket":"3a43777ecba58a7e8ad5fb6293611c1d5349d386",
+  "insider-trading":"ced7f60b92e8361ed3aadedf27b42636fb0cb4c1",
+  "scott-loves-his-wife":"bb386ba518d1b2cd7b1e2bf7b88dc04197189c64",
+  "blues-brother":"d2a6627308d64f4cacc2213900b6c0f391aaf1bc",
+  "calicocutpantscom":"ff958bf805ec3cc0538b913b0a6cf28b753efad6",
+  "parking-lot":"8e54fcb0-3a45-4520-9399-e8e17c520d47",
+  "credit-card-roulette":"a40dc49b56dbe0bf407da2576040937cd8e21c9d",
+  "stable-of-stars":"5ede015be38aec69d97b7e335fb2f730e01da672",
+  "little-buff-boys-commercial":"c7b37d36a89e195b78a4f51db7c1152af1b63c88",
+  "insult-comic-restaurant":"a18d52faec5035cc1dd6912431a977de4802b014",
+  "daves-huge-dumps":"4d0031a9fd7a9684311962e3ec4620d571a30730",
+  "drivers-ed":"8e479c905f64f1c61bafc4f1c53c520406a66089",
+  "tammy-craps":"d3d94c8313988eccd9bce25701860916a265e235",
+  "big-wave":"db07d1661c585fdda505f5f809f4ae64d5db3b55",
+  "claires":"ef725fb562878e213c67c4f9199bdd3a4206fbc2",
+  "barley-tonight":"9fa96c53-9301-4dd8-b00b-656e8654b819",
+  "fake-water":"ab1e3a836596dc126d4df66c5e067d6b885090ae",
+  "summer-loving":"8fd4671ac90910b956f077fdb601c3e91375290f",
+  "street-sets":"ceeaa291942b63ed64d92ffd90c833b59d4f4f49",
+  "the-driving-crooner":"f2bacbdd4f352f119cdaa7b84004efe271323c84",
+  "supermarket-swap-vr-edition":"47c0c2e76877835e3ae9103c0457a7be824be7c0",
+  "darmine-doggy-door":"becb9ef1703100b110b96518132a10aa1f014f00",
+  "parked-on-the-sidewalk":"2145e595-0c28-42e1-a2c0-fecd3906e71d",
+  "feed-eggs":"6fecea7ae1c871fe4ba51ae1e3cdf9e37686db68",
+  "studio-audience":"86a9e383997d0c0e68865c25536ebad2b3202a8e",
+  "silent-theater":"3d0115da7da01a1eebcd1ccf22e8a021d99bfc5a",
+  "dog-hair":"a8623b90e22a9239fb097cc8e3ae423a0a8f71a3",
+  "abx-heart-monitor":"b96f4224289b1366b660a9c217674e4caca52253",
+  "pay-it-forward":"65b9ccc5ea1633f43662d18f0b3808ab9cc5ab15",
+  "rat-mom":"b43520cd6aba9ec75be564f7f039a5046880ca59",
+  "friend-group":"4c99bb222fbace7d58106249a8e5b64d58f6a1dd",
+  "pacific-proposal-park":"69c6c343be1384fc75bd08f548c44f589efd2d39",
+  "gelutol":"deb01910509bcc1fda0b08dbbcef7122bf247793",
+  "shirt-brothers":"a0881eab0c4d13e00979f1fdd89858a1f5086a0b",
+  "randall-is-interesting":"f77e9a155b0676791d3c170ba64d9231456f5e10",
+  "photo-booth":"3ee124f3245a756a02c61e35d52ff25cd0945e9b",
+  "talking-about-my-kids":"1dcc9b8b3efdd044fef30a4ed64eec151a5cf1c9",
+  "banana-breath":"222f4b45-e7b7-4d7f-87af-1dc9059cc09d",
+  "metal-motto-search":"2dafeed00a6da12f2c3bbe6cdc36f22b2b142baa",
+  "king-of-the-dirty-songs":"6097553790f49f1ea1bb576ed277eddbb15f426f",
+  "tasty-time-vids":"b6c4fe84fe54e2e156ece4d41c7a7e84881b2849"
+};
+
+function imgUrl(slug) {
+  const id = IMG[slug];
+  return id ? `${BASE}${id}-2650x1500.jpg?w=500` : null;
+}
+
+const ALL_SKITS = [
+  {name:"Pulling the Door Open",s:1,e:1,slug:"pulling-the-door-open"},
+  {name:"Has This Ever Happened to You?",s:1,e:1,slug:"has-this-ever-happened-to-you"},
+  {name:"Baby of the Year",s:1,e:1,slug:"baby-of-the-year"},
+  {name:"Instagram",s:1,e:1,slug:"instagram"},
+  {name:"Gift Receipt",s:1,e:1,slug:"gift-receipt"},
+  {name:"Motorcycles",s:1,e:2,slug:"motorcycles"},
+  {name:"River Mountain High (Part 1)",s:1,e:2,slug:"river-mountain-high-part-1"},
+  {name:"Wilson's Toupees",s:1,e:2,slug:"wilsons-toupees"},
+  {name:"Whoopee Cushion",s:1,e:2,slug:"whoopee-cushion"},
+  {name:"River Mountain High (Part 2)",s:1,e:2,slug:"river-mountain-high-part-2"},
+  {name:"The Man",s:1,e:2,slug:"the-man"},
+  {name:"Magicians Suck!",s:1,e:3,slug:"magicians-suck"},
+  {name:"Focus Group",s:1,e:3,slug:"focus-group"},
+  {name:"Laser Spine Specialists",s:1,e:3,slug:"laser-spine-specialists"},
+  {name:"Funeral Organ",s:1,e:3,slug:"funeral-organ"},
+  {name:"Game Night",s:1,e:3,slug:"game-night"},
+  {name:"Herbie Hancock",s:1,e:4,slug:"herbie-hancock"},
+  {name:"Ghosts of Christmas Way Future",s:1,e:4,slug:"ghosts-of-christmas-way-future"},
+  {name:"Fully Loaded Nachos",s:1,e:4,slug:"fully-loaded-nachos"},
+  {name:"Honk If You're Horny",s:1,e:4,slug:"honk-if-youre-horny"},
+  {name:"Wienermobile",s:1,e:5,slug:"wienermobile"},
+  {name:"Choking",s:1,e:5,slug:"choking"},
+  {name:"New Office Printer",s:1,e:5,slug:"new-office-printer"},
+  {name:"The Bones Are Their Money",s:1,e:5,slug:"the-bones-are-their-money"},
+  {name:"Babysitter Hit and Run",s:1,e:5,slug:"babysitter-hit-and-run"},
+  {name:"Fenton's Horse Ranch",s:1,e:6,slug:"fentons-horse-ranch"},
+  {name:"Dan Vega's Mega Money Quiz",s:1,e:6,slug:"dan-vegas-mega-money-quiz"},
+  {name:"Bozo Dubbed (Part 1)",s:1,e:6,slug:"bozo-dubbed-part-1"},
+  {name:"Baby Shower",s:1,e:6,slug:"baby-shower"},
+  {name:"Bozo Dubbed (Part 2)",s:1,e:6,slug:"bozo-dubbed-part-2"},
+  {name:"Garfield House",s:1,e:6,slug:"garfield-house"},
+  {name:"You Can't Skip Lunch",s:2,e:1,slug:"you-cant-skip-lunch"},
+  {name:"Coffin Flop",s:2,e:1,slug:"coffin-flop"},
+  {name:"Prank Show",s:2,e:1,slug:"prank-show"},
+  {name:"Little Buff Boys (Competition)",s:2,e:1,slug:"little-buff-boys-competition"},
+  {name:"Ghost Tour",s:2,e:1,slug:"ghost-tour"},
+  {name:"The Capital Room",s:2,e:2,slug:"the-capital-room"},
+  {name:"Dan Flashes",s:2,e:2,slug:"dan-flashes"},
+  {name:"Diner Wink",s:2,e:2,slug:"diner-wink"},
+  {name:"Shops at the Creek",s:2,e:2,slug:"shops-at-the-creek"},
+  {name:"Baby Cries",s:2,e:2,slug:"baby-cries"},
+  {name:"Professor Dinner",s:2,e:3,slug:"professor-dinner"},
+  {name:"Detective Crashmore (Trailer)",s:2,e:3,slug:"detective-crashmore-trailer"},
+  {name:"Carber Hot Dog Vac",s:2,e:3,slug:"carber-hot-dog-vac"},
+  {name:"Detective Crashmore (Press Junket)",s:2,e:3,slug:"detective-crashmore-press-junket"},
+  {name:"Insider Trading",s:2,e:3,slug:"insider-trading"},
+  {name:"Scott Loves His Wife",s:2,e:4,slug:"scott-loves-his-wife"},
+  {name:"Blues Brother",s:2,e:4,slug:"blues-brother"},
+  {name:"CalicoCutPants.com",s:2,e:4,slug:"calicocutpantscom"},
+  {name:"Parking Lot",s:2,e:5,slug:"parking-lot"},
+  {name:"Credit Card Roulette",s:2,e:5,slug:"credit-card-roulette"},
+  {name:"Stable of Stars",s:2,e:5,slug:"stable-of-stars"},
+  {name:"Little Buff Boys (Commercial)",s:2,e:5,slug:"little-buff-boys-commercial"},
+  {name:"Insult Comic Restaurant",s:2,e:5,slug:"insult-comic-restaurant"},
+  {name:"Dave's Huge Dumps",s:2,e:6,slug:"daves-huge-dumps"},
+  {name:"Driver's Ed",s:2,e:6,slug:"drivers-ed"},
+  {name:"Tammy Craps",s:2,e:6,slug:"tammy-craps"},
+  {name:"Big Wave",s:2,e:6,slug:"big-wave"},
+  {name:"Claire's",s:2,e:6,slug:"claires"},
+  {name:"Barley Tonight",s:3,e:1,slug:"barley-tonight"},
+  {name:"Fake Water",s:3,e:1,slug:"fake-water"},
+  {name:"Summer Loving",s:3,e:1,slug:"summer-loving"},
+  {name:"Street Sets",s:3,e:1,slug:"street-sets"},
+  {name:"The Driving Crooner",s:3,e:1,slug:"the-driving-crooner"},
+  {name:"Supermarket Swap: VR Edition",s:3,e:2,slug:"supermarket-swap-vr-edition"},
+  {name:"Darmine Doggy Door",s:3,e:2,slug:"darmine-doggy-door"},
+  {name:"Parked on the Sidewalk",s:3,e:2,slug:"parked-on-the-sidewalk"},
+  {name:"Feed Eggs",s:3,e:2,slug:"feed-eggs"},
+  {name:"Studio Audience",s:3,e:2,slug:"studio-audience"},
+  {name:"Silent Theater",s:3,e:3,slug:"silent-theater"},
+  {name:"Dog Hair",s:3,e:3,slug:"dog-hair"},
+  {name:"ABX Heart Monitor",s:3,e:3,slug:"abx-heart-monitor"},
+  {name:"Pay It Forward",s:3,e:3,slug:"pay-it-forward"},
+  {name:"Rat Mom",s:3,e:3,slug:"rat-mom"},
+  {name:"Friend Group",s:3,e:4,slug:"friend-group"},
+  {name:"Pacific Proposal Park",s:3,e:4,slug:"pacific-proposal-park"},
+  {name:"Gelutol",s:3,e:4,slug:"gelutol"},
+  {name:"Shirt Brothers",s:3,e:4,slug:"shirt-brothers"},
+  {name:"Randall is Interesting",s:3,e:5,slug:"randall-is-interesting"},
+  {name:"Photo Booth",s:3,e:5,slug:"photo-booth"},
+  {name:"Talking about my Kids",s:3,e:5,slug:"talking-about-my-kids"},
+  {name:"Banana Breath",s:3,e:6,slug:"banana-breath"},
+  {name:"Metal Motto Search",s:3,e:6,slug:"metal-motto-search"},
+  {name:"King of the Dirty Songs",s:3,e:6,slug:"king-of-the-dirty-songs"},
+  {name:"Tasty Time Vids",s:3,e:6,slug:"tasty-time-vids"},
+];
+
+let state = { phase:'start', selectedSeasons:[1,2,3], skits:[], scores:{}, comparisons:[], currentIdx:0, history:[] };
+
+function initSkits() {
+  state.skits = ALL_SKITS.filter(s => state.selectedSeasons.includes(s.s));
+  state.scores = {};
+  state.skits.forEach(s => { state.scores[s.slug] = 1200; });
+  state.comparisons = [];
+  for (let i = 0; i < state.skits.length; i++)
+    for (let j = i + 1; j < state.skits.length; j++)
+      state.comparisons.push([i, j]);
+  shuffle(state.comparisons);
+  state.comparisons = state.comparisons.slice(0, Math.min(state.comparisons.length, state.skits.length * 5));
+  state.currentIdx = 0; state.history = []; state.phase = 'battle';
+}
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+}
+
+function eloUpdate(w, l) {
+  const K = 32, rW = state.scores[w], rL = state.scores[l];
+  const eW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
+  state.scores[w] = Math.round(rW + K * (1 - eW));
+  state.scores[l] = Math.round(rL - K * (1 - eW));
+}
+
+function pick(side) {
+  const [i, j] = state.comparisons[state.currentIdx];
+  const wi = side === 0 ? i : j, li = side === 0 ? j : i;
+  state.history.push({ idx: state.currentIdx, pairs: [i, j], winnerSlug: state.skits[wi].slug });
+  eloUpdate(state.skits[wi].slug, state.skits[li].slug);
+  state.currentIdx++;
+  if (state.currentIdx >= state.comparisons.length) state.phase = 'results';
+  render();
+}
+
+function undoPick() {
+  if (!state.history.length) return;
+  const last = state.history.pop();
+  const [i, j] = last.pairs;
+  const wi = last.winnerSlug === state.skits[i].slug ? i : j, li = wi === i ? j : i;
+  const K = 32, rW = state.scores[state.skits[wi].slug], rL = state.scores[state.skits[li].slug];
+  const eW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
+  state.scores[state.skits[wi].slug] = Math.round(rW - K * (1 - eW));
+  state.scores[state.skits[li].slug] = Math.round(rL + K * (1 - eW));
+  state.currentIdx = last.idx; state.phase = 'battle'; render();
+}
+
+function cardHtml(skit, side) {
+  const url = imgUrl(skit.slug);
+  const imgPart = url
+    ? `<img class="skit-img" src="${url}" alt="${skit.name}" loading="lazy" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="skit-img-placeholder" style="display:none">🎬</div>`
+    : `<div class="skit-img-placeholder">🎬</div>`;
+  return `<div class="skit-card" onclick="pick(${side})">${imgPart}<div class="skit-info"><div class="skit-name">${skit.name}</div><div class="skit-meta">Season ${skit.s} · Episode ${skit.e}</div></div></div>`;
+}
+
+function buildShareText(ranked) {
+  const top5 = ranked.slice(0, 5).map((s, i) => ['🥇','🥈','🥉','4.','5.'][i] + ' ' + s.name).join('\n');
+  return `my ITYSL skit rankings (via HOOHHHH productions)\n\n${top5}\n\nrank yours → [your url here]`;
+}
+
+function copyResults() {
+  const ranked = [...state.skits].sort((a, b) => state.scores[b.slug] - state.scores[a.slug]);
+  navigator.clipboard.writeText(buildShareText(ranked)).then(() => {
+    const msg = document.getElementById('copied-msg');
+    if (msg) { msg.textContent = '✓ copied to clipboard!'; setTimeout(() => { msg.textContent = ''; }, 2500); }
+  });
+}
+
+function render() {
+  const main = document.getElementById('main');
+
+  if (state.phase === 'start') {
+    main.innerHTML = `
+      <div class="start-screen">
+        <p class="intro">Pick your favorite skit in each head-to-head battle.<br>We'll use those choices to build your personal all-time ranking.</p>
+        <div class="season-filter">
+          <button class="filter-btn ${state.selectedSeasons.includes(1)?'active':''}" onclick="toggleSeason(1)">Season 1</button>
+          <button class="filter-btn ${state.selectedSeasons.includes(2)?'active':''}" onclick="toggleSeason(2)">Season 2</button>
+          <button class="filter-btn ${state.selectedSeasons.includes(3)?'active':''}" onclick="toggleSeason(3)">Season 3</button>
+        </div>
+        <p class="skit-count">${ALL_SKITS.filter(s => state.selectedSeasons.includes(s.s)).length} skits selected</p>
+        <button class="start-btn" onclick="startSort()" style="margin-top:20px">start sorting</button>
+      </div>`;
+
+  } else if (state.phase === 'battle') {
+    const [i, j] = state.comparisons[state.currentIdx];
+    const pct = Math.round((state.currentIdx / state.comparisons.length) * 100);
+    main.innerHTML = `
+      <div class="progress-wrap">
+        <div class="progress-bar-track"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+        <div class="progress-label">battle ${state.currentIdx + 1} of ${state.comparisons.length} · ${pct}% sorted</div>
+      </div>
+      <p class="battle-question">which skit do you like better?</p>
+      <div class="battle-area">
+        ${cardHtml(state.skits[i], 0)}
+        <div class="vs-badge">vs</div>
+        ${cardHtml(state.skits[j], 1)}
+      </div>
+      <div class="btn-row">
+        <button class="btn" onclick="skipPick()">skip / no opinion</button>
+        ${state.history.length ? `<button class="btn" onclick="undoPick()">← undo</button>` : ''}
+        <button class="btn" onclick="finishEarly()">see results now</button>
+      </div>`;
+
+  } else {
+    const ranked = [...state.skits].sort((a, b) => state.scores[b.slug] - state.scores[a.slug]);
+    const medals = ['🥇','🥈','🥉'];
+    const items = ranked.map((s, idx) => `
+      <li class="rank-item">
+        ${idx < 3 ? `<span class="rank-medal">${medals[idx]}</span>` : `<span class="rank-num">${idx + 1}</span>`}
+        <span class="rank-name">${s.name}</span>
+        <span class="rank-meta">S${s.s}E${s.e}</span>
+        <span class="rank-score">${state.scores[s.slug]}</span>
+      </li>`).join('');
+    main.innerHTML = `
+      <div class="results-header">
+        <h2>your personal ranking</h2>
+        <p>${ranked.length} skits sorted · elo scores on the right</p>
+      </div>
+      <ul class="rank-list">${items}</ul>
+      <div class="share-row">
+        <button class="share-btn" onclick="copyResults()">📋 copy my top 5 to share</button>
+        <div class="copied-msg" id="copied-msg"></div>
+      </div>
+      <button class="restart-btn" onclick="restart()">sort again</button>`;
+  }
+}
+
+function toggleSeason(s) {
+  if (state.selectedSeasons.includes(s)) {
+    if (state.selectedSeasons.length > 1) state.selectedSeasons = state.selectedSeasons.filter(x => x !== s);
+  } else { state.selectedSeasons.push(s); }
+  render();
+}
+function startSort() { initSkits(); render(); }
+function skipPick() { state.currentIdx++; if (state.currentIdx >= state.comparisons.length) state.phase = 'results'; render(); }
+function finishEarly() { state.phase = 'results'; render(); }
+function restart() { state.phase = 'start'; render(); }
+
+render();
+</script>
+</body>
+</html>
